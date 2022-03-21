@@ -1,0 +1,36 @@
+#!/usr/bin/env bpftrace
+
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+
+BEGIN
+{
+  printf("Starting trace...\n");
+  @pkt_types[0] = "PACKET_HOST";
+  @pkt_types[1] = "PACKET_BROADCAST";
+  @pkt_types[2] = "PACKET_MULTICAST";
+  @pkt_types[3] = "PACKET_OTHERHOST";
+  @pkt_types[4] = "PACKET_OUTGOING";
+  @pkt_types[5] = "PACKET_LOOPBACK";
+  @pkt_types[6] = "PACKET_USER";
+  @pkt_types[7] = "PACKET_KERNEL";
+}
+
+kprobe:ip_rcv
+{
+  $skb = (struct sk_buff*) arg0;
+  @[probe, "a"] = count();
+}
+
+// Let's trace the types of packets arriving in ip_rcv_core
+kprobe:ip_rcv_core
+{
+  $skb = (struct sk_buff*) arg0;
+  @[probe, @pkt_types[$skb->pkt_type]] = count();
+}
+
+END
+{
+  clear(@pkt_types);
+  printf("Ending trace...\n");
+}
