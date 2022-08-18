@@ -3,17 +3,6 @@
 #include <stdint.h>
 #include <iproute2/bpf_elf.h>
 
-/*
-Install with:
-tc qdisc add dev eth0 clsact
-                          direct action       section from file
-                                   V                 V
-tc filter add dev eth0 ingress bpf da obj tc-trace.o sec ingress
-tc filter show dev eth0 ingress
-mount | grep bpf
-tee /sys/fs/bpf/
-*/
-
 #ifndef __section
 # define __section(NAME)                  \
   __attribute__((section(NAME), used))
@@ -44,42 +33,18 @@ static void BPF_FUNC(trace_printk, const char *fmt, int fmt_size, ...);
     })
 #endif
 
-
-// static void *BPF_FUNC(map_lookup_elem, void *map, const void *key);
-
-// struct bpf_elf_map acc_map __section("maps") = {
-//     .type           = BPF_MAP_TYPE_ARRAY,
-//     .size_key       = sizeof(uint32_t),
-//     .size_value     = sizeof(uint32_t),
-//     .pinning        = PIN_GLOBAL_NS,
-//     .max_elem       = 2,
-// };
-
-// static __inline int account_data(struct __sk_buff *skb, uint32_t dir)
-// {
-//     uint32_t *bytes;
-
-//     bytes = map_lookup_elem(&acc_map, &dir);
-//     if (bytes)
-//             lock_xadd(bytes, skb->len);
-
-//     return TC_ACT_OK;
-// }
-
 __section("ingress")
 int tc_ingress(struct __sk_buff *skb)
 {
-    printk("ingress\n");
+    printk("ingress");
     return TC_ACT_OK;
-    // return account_data(skb, 0);
 }
 
 __section("egress")
 int tc_egress(struct __sk_buff *skb)
 {
-    printk("egress\n");
+    printk("egress");
     return TC_ACT_OK;
-    // return account_data(skb, 1);
 }
 
 char __license[] __section("license") = "GPL";
